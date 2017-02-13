@@ -1,0 +1,84 @@
+<html>
+<head>
+ <link href="css/style.css" rel="stylesheet" type="text/css">
+ <link rel="stylesheet" href="css/prettify.css" type="text/css" media="all"/>
+ <script type="text/javascript" src="js/prettify.js"></script>
+</head>
+<body onload="prettyPrint();">
+<h1>Nxs File Format</h1>
+<p>In the nexus file we need to store:
+<ul>
+<li><a href="#header">header</a>: version, signature, bounding sphere, number of primitives</li>
+<li><a href="#index">index</a>: for each patch: offset in the file, bounding sphere, cone</li>
+<li><a href="#dag">dag</a>: the direct acyclic graph</li>
+<li><a href="#patches">patches</a>: the list of patches (either compressed or uncompressed</li> 
+</ul>
+<p>Each section and each patch is padded to 256 bytes.</p>
+
+<h2><a name="header"></a>Header</h2>
+<p>Header is simply a memory dump of the following structure. See also signature.h for details.</p>
+<pre class="prettyprint">
+class Header {
+ public:
+  quint32 version;      
+  Signature signature;   //describe vertex attributes
+  quint32 n_patches;     //number of patches
+  quint32 dag_size;      //size in bytes of the dag
+  quint64 vert;          //total number of vertices (at full resolution)
+  quint64 face;          //total number of faces
+  vcg::Sphere3f sphere;  //bounding sphere
+  quint64 index_offset;  //position in the file of the patch index
+  quint64 dag_offset;    //position in the file of the dag
+};
+</pre>
+
+<h2><a name="index"></a>Index</h2>
+<p>Just an array of entries...</p>
+<pre class="prettyprint">
+struct Entry {
+  quint32 offset;        //offset on disk (could be moved), granularity NEXUS_PADDING (256) bytes)
+  quint32 disk_size;     //actual disk size (granularity 1 byte)
+  quint32 primitives;    //number of primitives
+  vcg::Sphere3f sphere;  //bounding sphere
+  Cone cone;             //normals cone
+};
+</pre>
+
+<p>Granularity allows for 1024Gb of file. More than enough. At least for a while.</p>
+
+<h2><a name="dag"></a>Dag</h2>
+<p>Dag is saved as a sequence of nodes and links:</p>
+<pre class="prettyprint">
+struct Node {
+  qint32 begin, out_begin, end;
+  vcg::Sphere3f sphere;
+  float error;
+};
+
+struct Link {
+  quint32 node;
+  quint32 patch;
+};
+</pre>
+<p>we need to know how many nodes and how many links, so
+at the beginning of the dag, we save 2 quint32: n_nodes and n_links.
+</p>
+
+<p>Notice how for rendering with saturated error (the only supported mode), 
+the inbound links to a node are not needed and could be safely omitted, halving the size of the dag.</p>
+
+
+<h2><a name="patches"></a>Patches</h2>
+<p>Each patch can be recovered provided we have the signature. An uncompressed patch is stored as:</p>
+<pre class="prettyprint">
+quint16 nvert, nface;
+[vertex coordinates 0... vertex coordinates n]
+optionally, [vertex normals 0... vertex normals n]
+            [vertex color 0... vertex color n]
+etc.
+[indices of the triangles as quint16 triplets]
+</pre>
+<p>Each patch is padded to 256 bytes.</p>
+<p>Compressed format for patches is described in the meco (mesh compression) folder documentation.</p>
+</body>
+</html>

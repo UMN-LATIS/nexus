@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link href="css/screen.css" rel="stylesheet" type="text/css"/>
+  <link href="css/style.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<h1>Nxsproj</h1>
+
+<h2>Parametrization</h2>
+
+<p>Parametrization is an atlas (collection of 2D domains) and a map for each triangle to the atlas.
+In practice, is a collection of layes with bounding box and each patch is split into fragments
+each one pointing to a different layer.</p>
+
+<p>If a layer is too big, we need to split it, and we have two strategies: split with kd-tree or quadtree
+and split again the fragments or split the layer with overlap.</p>
+
+<h3>Orthographics planes: ORTHO</h3>
+<p>Marching intersection approach: 6 ortographics planes, multiple layers. Textures
+too big are just split.
+Algoritmo: faccio trovo i piani. Assegno le facce ai piani in base alla normale. faccio 
+qualche ciclo di espand-contract (come?) per pulire il rumore e cercare di fare meno frammenti possibile.
+Qualche frammento andra' ridiviso (perche' si self occlude, o perche' parzialmente occluso da qualcun'altro (sarebbe bello dividerli il meno possibile.
+</p>
+
+<h3>Original photo projection: PHOTO</h3>
+<p>Use the original photo projections, trusting them to be good enough. Optionally add
+syntetic panoramic views.
+
+Faccio i rendering a tutti i livelli del nexus intero e vedo dove i triagoli si mappano meglio.
+Per questo mi serve una struttura con indice per triangolo. 
+
+Il problema e' quando ci sono un sacco di immagini come fare a ridurre al minimo il numero di frammenti.
+dilate erode?   
+
+</p>
+
+<h3>Parametrization of patches: PARAM</h3>
+<p>Rely on old fashioned per patch parametrization </p>
+
+
+<h2>Uniformation</h2>
+
+<h3>Reprojection</h3>
+<p>We create a lot of sublayers mapping the photo onto the parametric space</p>
+
+<h3>Flow optimization</h3>
+<p>We could run optical flow to fix the low level details.</p>
+
+<h3>Color matching</h3>
+<p>We have a lot of correspondence points then betwee photos and we can run a global algorithm
+to make the photo match colors</p>
+
+<h3>Blending</h3>
+
+Step 1: trovare lo spazio di parametrizzazione globale.
+
+ORTHO: collezzione di layers,
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2>Costruzione</h2>
+
+<h3>Depth peeling su ciascuno dei 6 piani</h3>
+<p>Problema: i triangoli parzialmente ottusi: basta fare un rendering con <= e verificare che non vengono disegnati.
+(quelli disegnati appartengono a layer sotto...)</p>
+<ul>
+<li>Per ogni livello del nexus facciamo il depth peeling: vogliamo le textures per ogni livello...</li>
+<li>per ogni triangolo del nexus ci salviamo in quale layer finisce</li>
+<li>per ogni patch ci salviamo i bounding boxes di ciascun fragment</li>
+<li>Quando il canvas diventa troppo grande si spezza quello di prima in due/quattro, si croppa e di prosegue,
+teniamoci un pixel di sovrapposizione per la linear interpolation.</li>
+<li>i rettangoloni conservano le loro coordinate relative ai 6 piani iniziali?</li>
+</ul>
+
+<h3>Reprojection</h3>
+<ul>
+<li>per ogni foto, per ciascun layer riproiettiamo le texture sul layer.</li>
+<li>i pixel li mettiamo tutti (ci serve per il blending)</li>
+<li>per ogni pixel ci salviamo la qualita' (come alpha) (formato float lab + alpha)</li>
+<li>alpha e': sampling (normale e distanza foto) x distanza da bordo x distanza da bordofoto
+</ul>
+
+<h3>Optical flow</h3>
+<ul>
+<li>per allineare le varie riproiezioni, cosi' poi ce ne sbattiamo delle frequenze</li>
+</ul>
+
+<h3>Histogram matching</h3>
+<ul>
+<li>Non puo' essere globale, per via del cambio di ombre</li>
+<li>ma occhio alle adiacenze: senno' si vedono i bordi dei rettangoloni</li>
+<li>Le varie proiezioni sono parziali, si deve lavorare sulle parti comuni</li>
+<li>La soluzione secondo me e' sistemone: si mettono tutte le corrispondenze
+e si risolve per minimizzare gamma (luminosita') e lineare (hue + saturation).</li>
+<li>Questo non risolve pero' le cose locali, speriamo nel blending</li>
+</ul>
+
+<h3>Blending and mipmapping</h3>
+<ul>
+<li>facciamo blending di tutte le immagini.</li>
+<li>facciamo rendering per beccare la mask, la ingrandiamo e mettiamo nero tutto il resto</li>
+</ul>
+
+<h2>Rendering</h3>
+<ul>
+<li>1: direct rendering, per ogni fragment bindiamo texture e via col rendering, ma solo per i 3 piani visibili fino a 45 gradi. (testare la resa con differenti dimensioni di blocchi texture spreco/performance)</li>
+<li>2: deferred per ogni texture avrei bisogno del box. poi renderizzo con clipping sul numero della texture salvato sullo stencil.</li>
+<li></li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+indexed: 10 vertici 20 facce    3 float per vertex 3 int per face 12*v + 12*f = 36*v
+triangle soup: 9 float per face = 27*f -> 54*v   108*v    100G -> 300G
+
+build the first level: 12*v + 6*f = 24*v  66G
+
+store next triangle soup (half the triangles): 150G
+
+
+
+
+
+
+
+
+
+
+Costruzione della partizione.
+
+La multipartizione puo' essere fissa (Tetrapuzzles) o adattabile (Voronoi, KdTree, BTree).
+
+In entrambi i casi serve il bounding box per stabilire il volume iniziale.
+
+Se e' adattabile pero' vorremmo evitare di fare troppe passate (per trovare 
+la mediana di ogni nodo si dovrebbero ordinare tutti i triangoli!).
+
+Un trucco statistico e' estrarre dei triangoli a caso, e siccome i nodi sono dell'ordine di 65K
+saranno ben distribuiti. In questo modo inseriamo i triangoli uno alla volta e splittiamo
+quando necessario.
+
+Per estrarre pseudo a caso efficacemente, (e senza che sia necessario sapere a priori
+quanti sono i triangoli in tutto) facciamo una piramide dove per ogni livello la probabilita'
+di finirci per un vertice e' 1 su 2^livello e poi streamiamo dal vertice. MeshStream.
+
+
+Semplificazione e splitting:
+
+Prendiamo ogni nodo della partizione, lo semplifichiamo, lo salviamo nel nexus (ormai l'abbiamo unificato!)
+e lo streamiamo nel MeshStream (da cui poi pescheremo per fare la prossima partizione.
+In questo passaggio, dopo la semplificazione e il salvataggio, 
+a ogni triangolo assegnamo il nodo del BTree di provenienza, 0 all'inizio (il sink del dag).
+Quando lo salviamo nel nexus possiamo cosi' splittarlo per patch e possiamo costruire il dag.\
+
+Ovviamente dobbiamo lockare i vertici di bordo. Al momento si locka tutto il triangolo, c'e' una bupona ragionr?
+
+In effetti c'e' una gran dose di culo: quando prendo un nodo, e lo splitto prima di semplificarlo
+i nodi associati alle facce sono proprio i link uscenti dal nodo.
+
+Occhio all'errore associato al nodo... controllare che sia giusto
+
+TODO aggiungere modi diversi di calcolare l'errore e verificare se funzionano
+far funxionare il cono delle normali come si deve.

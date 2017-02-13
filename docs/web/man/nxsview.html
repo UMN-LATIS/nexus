@@ -1,0 +1,48 @@
+<html>
+<head>
+ <link href="../css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+
+<h1>nxsview</h1>
+
+<h3>Synopsys</h3>
+<pre>
+nxsview [OPTIONS] [URLs...]
+</pre>
+
+<h3>Description</h3>
+<p>Nxsview is a demo progam for nxs models visualization. It exposes
+ all the parameters of the visualization algorithm for testing purpouses.</p>
+<p>The program allows also remote visualization over http if the .nxs
+file is placed in a webserver: es: <code>nxsview http://vcg.isti.cnr.it/~ponchio/capital.nxs</code></p>
+<p>See the accompanied documentation for details of the rendering algorithm</p>
+<p>More than on model can be visualized at once, but no mechanism for positioning
+them in space is provided still</p>
+
+<h3>Options</h3>
+ <dl>
+  <dt>-e ERROR --error ERROR</dt>
+  <dd>Target projected error (in pixels) for the rendering algorithm (default 2).
+      Lower values generate higher quality images but might result in slower fps.
+  </dd>
+
+  <dt>-f VALUE --fps VALUE</dt> 
+  <dd>Dynamically adjust the target error trying to keep the specified framerate.
+      Override <em>-e</em>, of course.
+  </dd>
+
+  <dt>-m VALUE --ram VALUE</dt>
+  <dd>Size of the RAM cache in Mb. Good values are over 300 MB for high quality models.
+  </dd>
+
+  <dt>-g VALUE --vide VALUE</dt> 
+  <dd>Size of the GPU cache in Mb. Good values are over 250 MB for hight quality models.</dd>
+
+  <dt>-b --backface</dt>
+  <dd>Do not attempt to cull backfacing nodes (useful for non closed models)</dd>
+</dl>
+
+</body>
+</html>

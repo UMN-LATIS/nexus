@@ -1,0 +1,68 @@
+<html>
+<head>
+ <link href="../css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<h1>nxsedit</h1>
+
+<h3>Synopsys</h3>
+<pre>
+nxsedit [OPTIONS] [NEXUS INPUT]
+</pre>
+
+<h3>Description</h3>
+<p>Nxsedit can be used for a number of post-processing operations over a nxs file:
+compression, adding color from projected photos, pruning, etc</p>
+<p>All operations generate a new nexus leaving the old one untouched.</p>
+
+<h3>Options</h3>
+ <dl>
+  <dt>-o FILE --nexus_file FILE</dt>
+  <dd>filename of the nexus output file, .nxs is added automatically.
+    If not specified no output file is created.</dd>
+
+  <dt>-i --info</dt> 
+  <dd>print information about the file: number of patches, dag etc. The number of
+      triangles and vertices includes all the resolutions, you can assume the
+      highest resolution level holds half the total amount.
+  </dd>
+
+  <dt>-s VALUE --size VALUE</dt> 
+  <dd>Extract a subset of the nxs of a given size (in MB), pruning lower error nodes.
+  </dd>
+
+  <dt>-e VALUE --error VALUE</dt> 
+  <dd>Extract a subset of the nxs pruning nodes with error below the given value.
+    Use <em>--info</em> option to see the current error values.
+  </dd>
+ 
+  <dt>-t VALUE --triangles VALUE</dt> 
+  <dd>Extract a subset of the nxs of a given triangle count, pruning lower error nodes.
+    Again you can use --info to see the current number triangles in the nxs.
+  </dd>
+
+  <dt>-l --last_level</dt> 
+  <dd>Prune the last level of nodes from the nexus (thus approximately halving the
+     size and the triangle count)
+  </dd>
+
+  <dt>-z --compress</dt> 
+  <dd>Applies a (somewhat lossy) compression algorithm to each patch;
+      the compression ratio is about 20-25%. You NEED to use the <em>-v</em>
+      vertex quantization step to produce a crackless nxs.
+  </dd>
+
+  <dt>-v VALUE --vertex_quantization VALUE</dt> 
+  <dd>Set up the vertex quantization step during compression. Good values
+      are usually around 1/10th of the average error of the last level nodes.
+      Lowering this value will allow better compression but reduce the quality
+      of the mesh. Consider dropping a level instead.<br/>
+      WARNING: at the moment compression algorithm supports at most 21 levels
+      of quantization, make sure that log2(bounding_box_size/quantization) &lt; 21.	
+  </dd>
+
+</dl>
+
+</body>
+</html>

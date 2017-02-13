@@ -1,0 +1,95 @@
+BUGS:
+multiple models/instances: the error computation is wrong ...why?
+duomo models... there is some problem!
+
+small freezes when loading patches: why? maybe updatepriorities? or simply not threaded GPU?
+
+si potrebbe fare l'estrazione in parallelo di tutti i modelli?... bisogna storarsi i visited (sai che fatica).
+si guadagna la possibilita' di fare cap in numero di triangoli.
+non si guadagna niente sulla cache (che tanto si aggiorna alla fine come meglio puo'.
+
+semplificazione lentissima (piantata?) sulla statuina......
+
+
+LATEST & PROBLEMS
+
+controllare znear far in nxsview (si puo' fare meglio?)
+
+profile per nexus grossi.....
+
+ottimizzare lo streaming: leggere in anticipo? leggere piu' blocchi? threads?
+fps e autofps
+high resolution screenshots in nxsvew
+invert normals in nxsedit
+
+updatePriorities andrebbe chiamato una volta sola per frame, ma begin e end frame stanno nel renderer maledizione!
+parallelizzare la semplificazione. OpenMP
+compressione OpenCMT
+
+
+
+
+POINT CLOUDS
+
+Review creation (actually some nodes gets -nan as error
+Don't create useles VBO buffers for faces when rendering point clouds.
+E fare un path alternativo (si riesce a fare il rendering multistrato col
+motore del nexus? ho paura  di no....).
+
+CACHE
+
+0) Batteria di tests.
+1) Dimostrare che funziona, far funzionare l'abort, e gestire il drop dei tokens (in transito)
+2) Problema http: la cache non e' efficente, dovrebbe poter fare piu' query in sequenza.
+   (questo incasina ulteriormente l'abort)
+   esempio con coda di 2
+
+   get(1) -> ritorna immediatamente
+   get(2) -> locka fino a che arriva 1 e ritorna.
+   get(3) -> locka e fino all'arrivo 2.
+   poi la cache non vuole niente....
+   arriva 3 -> open the door
+
+LIBNEXUS
+
+- salvare le patch in un unico nodo (riduciamo un sacco VBO, si comprimono meglio,
+  evitiamo duplicazioni per patch e cambi di stato)
+  fare una statistica per verificare se ha senso (overhead in memoria)
+- pulire la porcata del controller
+- il prioritize va prima o dopo il render:
+    prima permette alla versione con delay di aspettare
+    dopo si prioritizza solo quello che serve (non si traversa l'albero se non si ha niente in cache)
+- sarebbe meglio se il renderer non si fermasse quando in contra la prima patch non in cache.
+  ma questo crea problemi con il cut (perche' noi ci fidiamo dell'errore nello stack e non controlliamo
+  i papa'.
+- pulire versione qt, versione mac.
+- visualizzatore coni delle normali opzionale [ e faril funzionare
+- cpu 100%? controllare che la cache non faccia cazzate....
+- streaming anche del DAG?
+- traversal stop by size, error and triangle count all in the renderer.
+
+
+
+NXSBUILDER
+
+- read only the first N triangles, (useful for testing)
+- multithread in semplificazione (cercare un semplificatore migliore)
+- quantizzazione e pulizia input (opzionali)
+
+
+NXSEDITOR (pre-nexus)
+e' la struttura dati sbagliata (ci dovremmo tenere tutto fino in cima).
+Invece teniamo il livello piu' basso, e quelli sopra come nuvole di punti
+usando il quadtree originario
+
+- le primitive (cancella sposta) sono sempre applicate al livello piu' basso.
+- e poi si pigliano i punti con il quaddtree.
+- quando hai finito puoi creare il nexus.
+
+NXSEDIT
+
+
+
+MISCELLANEOUS
+
+- controlli per -z -n -v in creazione e nxsedit

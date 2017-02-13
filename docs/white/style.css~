@@ -1,0 +1,20 @@
+/* COLORS AND BACKGROUNDS */
+body { color: #555; background-color:#fff; }
+h1, h2, h3 { color:#333; }
+a:link, a:visited { text-decoration:none; color:#a00; }
+a:hover { text-decoration:none; color:#e00; }
+
+/* MARGINS AND POSITIONING */
+
+body { width:800px; margin: 0px auto;}
+h1 { margin: 0.5em 0em 0.2em 0em; }
+
+/* FONTS */
+
+body { font-family:Verdana; font-size:13px; }
+h1, h2, h3 { font-family:Verdana; }
+h1 { font-size: 2em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.4em; }
+h4 { font-size: 1.1em; }
+

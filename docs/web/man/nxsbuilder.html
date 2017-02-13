@@ -1,0 +1,74 @@
+<html>
+<head>
+ <link href="../css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<h1>nxsbuilder</h1>
+
+<h3>Synopsys</h3>
+<pre>
+nxsbuilder [OPTIONS] [PLY FILES...]
+</pre>
+
+<h3>Description</h3>
+<p>Nxsbuilder generates a .nxs multiresolution mesh format given one or more .ply file</p>
+<p>The process involves generating a sequence of increasingly coarse partitions of the mesh, 
+interleaved with simplifications steps.</p>
+<p>Current implementation is based on kd-trees with differently aligned axis, other
+partitioning strategy might be added in future.</p>
+<p>If you need compression or streaming capabilities a pass through nxsedit is needed.</p>
+
+
+<h3>Options</h3>
+ <dl>
+  <dt>-e FILE --nexus_file FILE</dt>
+  <dd>filename of the nexus output file, .nxs is added automatically.
+    If not specified the name of the first .ply is used.</dd>
+
+  <dt>-f VALUE --faces_patch VALUE</dt> 
+  <dd>average faces per patch, default value is 8000, must be less than 16000.
+      Decreasing this value allow for better resolution control but reduces rendering
+      performance and will increase size of the dataset.</dd>
+
+  <dt>-N --no_normals</dt> 
+  <dd>Do not compute and store per vertex normals. Normal are usually computed from the geometry,
+      not read even when present in the ply.
+  </dd>
+
+  <dt>-c --colors</dt> 
+  <dd>Read and preserve color per vertex information. If not present in the ply colors will 
+     be present in the .nxs (albeit their value unspecified). Might be useful to add color per vertex
+     in a later stage.</dd>
+
+  <dt>-d METHOD --decimation METHOD</dt>
+  <dd>Available decimation methods are: quadric (default) and edgelen. The latter method is much faster but will
+    produce worse quality model (more triangles to obtain the same approximation.
+    If using colors per vertex, use the edgelen method: it is important to have
+    uniform edge length.</dd>
+
+  <dt>-v --verbose</dt> 
+  <dd>Verbose output.</dd>
+
+  <dt>-p --pedantic</dt> 
+  <dd>Make lots of controls and report (possible) problems.</dd>
+
+  <dt>-A VALUE --adaptive VALUE</dt> 
+  <dd>If VALUE = 0 the nodes of the kd-tree will be always splitted in half (thus
+      creating an octree. When the VALUE is 1 the nodes will be split such that
+      that half the triangles will fall on each half, regardless of the aspect-ratio.
+      Values in the middle will balance between these extreme. Default value is 0.33.</dd>
+
+  <dt>-r <val> --ram <val></dt> 
+  <dd>max ram used (in Megabytes) [not implemented for now]</dd>
+
+  <dt>-s VALUE --scaling VALUE</dt> 
+  <dd>reduction factor [not implemented]</dd>
+
+  <dt>-Q --cube box</dt> 
+  <dd>start with a cube box, instead of the bounding box (in combination
+     with -A 0 turns the partition into an octree.</dd>         
+</dl>
+
+</body>
+</html>

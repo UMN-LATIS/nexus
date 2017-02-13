@@ -1,0 +1,58 @@
+Da fare:
+
+rendering offline... abbastanza semplice senza cache.
+
+Cose da ricordarre:
+
+L'errore in priority dev'essere diverso dall'errore in rendering:
+
+In rendering se una cosa e' fuori dal frustum non la espandiamo proprio (tanto
+tutti i suoi figli lo sono per la saturazione), per cui ci mettiamo errore 0
+(senno' mi ferma l'estrazione).
+
+Per quanto riguarda (sempre in rendering, i nodi che non sono renderizzabili
+perche' non in cache, non vorrei mi fermassero l'estrazione per cui marchiamo
+i figli come 'bloccati' e non marchiamo il nodo come selected.
+Poi i nodi 'bloccati' a loro volta 'bloccano' i figli. In questo modo
+(siccome l'ordine della visita e' corretto) evitiamo CUT non validi.
+
+
+
+Rendering:
+
+Abbiamo:
+
+1) cache (detta controller0.
+   alla cache vanno registrati i nexus
+   le instance
+   
+   quando si prioritizza bisogna sapere almeno l'inizio del frame.
+
+   autogestione del framerate (che bordello)
+   
+   rendering in diretta senza cache? si puo' fare? da disco forse
+   ma non realtime, diciamo per fare un rendering. (per cui se esce dalla
+memoria massima droppa su disco).
+   
+
+Ciclo di vita di un Nexus:
+
+1) new Nexus(controller);
+           -> spawna un nexus.load... 
+
+   delete
+          -> bisogna aspettare che finisca (sia il load che eventuali read...)
+               Soluzione 1: segnale di abort (nel middle).
+                            + flush (che comunque aspetta la ram_cache.
+
+                qt risolve il problema con deletelater.
+
+               Soluzione 2: Nexus *nexus = new Nexus(controller);
+                            delete nexus; -> si copia i puntatori e il vero delete
+                            viene fatto nel ram_cache.
+
+                    
+La soluzione 2 prevede che tutti input su nexus passino da ram_cache quando c'e' controller.
+                    
+
+

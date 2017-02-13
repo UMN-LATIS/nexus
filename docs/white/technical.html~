@@ -1,0 +1,154 @@
+<html>
+<head>
+ <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<h1>Nexus</h1>
+<h2>A multiresolution mesh visualization library (in C++)</h1>
+
+<h3>Introduction</h3>
+<p>
+Multiresolution, cluster based, evolution of tetrapuzzles and BDAM.
+Contributions: 
+<ul>
+<li>new spatial partitioning combines better aspects of tetrapuzzles (fast streaming construction) and BDAM (adaptive partitioning) using kd-trees.
+<li>support for multiresolution textures.
+</ul>
+</p>
+
+<p>Features:
+<ul>
+<li>Supports multiple models and multiple instances of the same model
+<li>Support huge models (test up to 1 billion triangles)
+<li>Robust (non manifold-meshes)
+<li>Http streaming
+<li>Multiplatform: Windows, Linux, Mac, Ios, WebGL
+<li>Opensource.
+</ul>
+
+<h2>Related Work</h2>
+<p>Small intro on multiresolution early works, progressive meshes and the DAG, and the GPU > CPU problem</p>
+
+<h3>Cluster Based Multiresolution</h3>
+<p>Here we mention clustered progressive mesh line of work, and the competing
+bdam, tetrapuzzles, BMT (one line of work).</p>
+
+<h2>Construction</h2>
+<h3>General algorithm and our KD-Tree solution</h3>
+<p>remember to notice that the simplification algorithm must keep borders but it's otherwise free to do what he want (includeing progressive meshes!)</p>
+
+<h2>Rendering</h2>
+<h3>Traversal</h3>
+<h3>Error and saturation</h3>
+
+<h2>Doing it all efficiently</h2>
+<p>All of this minimize opengl calls, dag traversal is amorthized (each operation corresponds to many triangles) each patch can be optimized in preprocessing (for cache and rendering) and eventually compression, all is required is memory transfer, asyncronous cache</p>
+
+<h3>Textures</h3>
+<p>In principle the format can support texture coordinates and 1 texture per node. In practice added size per vertex and problems with parametrization of potentially very complex surfaces (and time required, models can be large)<p>
+<p>More efficient to use a number of projective textures, problem is how.</p>
+
+<h3>Construction</h3>
+<p></p>
+
+<h3>Rendering</h3>
+
+
+
+
+<pre>
+Overview.
+
+1) The multiresolution structure based on MT
+   Point clouds for free.
+2) construction of the model
+     mesh
+       new spatial subdivision
+       streaming approach
+       simplification
+       error computation and saturation
+       patch structure
+       steps:
+        1) Stream
+        2) Simplification
+        3) Multipartition.
+           3.1) create partition at level 0
+                while(! single node partition)
+                   simplify each bin to a tmp file
+                   ADD ALGORITHM: grid clustering simplification.
+                   OPTIMIZE: we could use threads here easily.
+                   OPTIMIZE: the tmp file is needed because we will need multiple pass while streaming
+                              but could be more efficient in space (no need for fixed size: 
+                              when we add a bin we know how big it is
+                              we could also save the mesh here in indexed format, saving even more space.
+                   create partition at level i+1 streaming from tmp.
+        4) Nexusbuilder
+           4.1) each triangle in the temporary files of the multipartition have a 'part' field, 
+                which remember the partition in the previous level.
+                  
+      
+     point cloud (differential)
+
+     projective textures
+       Main idea: texalign with weights creates a projective atlas.
+       Optimize it by taking the cube infinite projective textures (doubling when needed by occlusion)
+       a sort of marching intersection.
+       we render the model using the texalign atlas as seen ftom the 6 directions (using depth peeling
+       to solve oclcusionsl and record color and depth map. We can also record resolution.
+       Simplify matrix computations taking XYZ? would that be significant?
+       The 6 directional maps are split hierarchically *taking also Z into account)
+       when makeing deferred shading rendering, we store depth and normal in the buffer.
+       We traverse the 6 trees and get a cut of projective textures, draw the volumes shadow map style.
+
+       Weighting and blending: we could use the square of the normal component along the direction of the 
+       map to weight the contributes (always 3, unless normal is close to one direction, we would not need
+       a final pass to normalize :)
+      
+       Other problem: blending between adjacent leaves of the same directional view;
+         1) ignore it. (ugly!)
+         2) duplicate one row of samples (good for same level, bad for different levels:
+            we would get a T intersection...
+         3) 2 rows of duplication with on-the-fly blending to zero on the borders, and we allow at 
+            most 1 level between leaves of the xtracted tree
+       
+     What about the same thing as a rendering technique?
+     We keep the geometry as height map with corresponding normal texture and color texture each with 
+      independernt resolution :)
+     Yes if we can blend the Z. (and we should be able to.... always based on the normal of the face)
+     but would need a test  to be sure.
+
+3) rendering of the model
+     models & instances & controller.
+       memory management
+     mode, error
+       you can have mode per instance and error per instance, but then you need to set up all of them.
+     dag & traversal
+     geometry
+     occlusion culling
+     streaming
+
+     deferred shading
+
+ cache
+ compression
+</pre>
+
+<h3>Classes</h3>
+<pre>
+//memory mapped, binned. WARNING: do not cross bin boundary
+class TemporaryFile: QTemporaryFile {
+  quint64 bin_size;
+};
+//can be used as an array, bins are only for out-of-core automatic management
+template &lt;class V&gt; TemporaryArray: public TemporaryFile {
+};
+
+class BinFile: public TemporaryFile {
+};
+
+class Bin {
+};
+</pre>
+</body>
+</html>
