@@ -12,6 +12,10 @@
 
 #include "../nxszip/meshdecoder2.h"
 
+#if defined(__APPLE__)
+	#include <random>
+#endif
+
 #if _MSC_VER >= 1800
 #include <random>
 #endif

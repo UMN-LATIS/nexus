@@ -67,7 +67,7 @@ HEADERS  += ../common/signature.h \
 FORMS    += \
     nxsview.ui
 
-INCLUDEPATH += ../vcglib ../common/
+INCLUDEPATH += ../vcglib ../common/ /usr/local/include
 
 win32:INCLUDEPATH += ../../../../code/lib/libcurl/include \
                      ../../../../code/lib/glew/include
@@ -75,6 +75,6 @@ win32:INCLUDEPATH += ../../../../code/lib/libcurl/include \
 win32:LIBS += ../../../../code/lib/libcurl/libcurl.lib \
               ../../../../code/lib/glew/lib/glew32.lib
 
-unix:LIBS += -lGLEW -lGLU -lcurl
+unix:LIBS += -lGLEW -lcurl -L/usr/local/lib -L/usr/local/Cellar/qt/4.8.7_3/lib 
 
 DESTDIR = "../bin"

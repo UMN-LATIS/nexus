@@ -221,7 +221,10 @@ void Renderer::setMode(Renderer::Mode m, bool on) {
 
 void Renderer::renderSelected(Nexus *nexus) {
 
-	assert(!glGetError());
+	int err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		cerr << "OpenGL error: " << err << endl;
+	}
 	Signature &sig = nexus->header.signature;
 	bool draw_normals = sig.vertex.hasNormals() && (mode & NORMALS);
 	bool draw_colors = sig.vertex.hasColors() && (mode & COLORS ) && !(mode & PATCHES);
@@ -262,7 +265,10 @@ void Renderer::renderSelected(Nexus *nexus) {
 			stats.cone_culled++;
 			continue;
 		}
-		assert(!glGetError());
+
+		while ((err = glGetError()) != GL_NO_ERROR) {
+			cerr << "OpenGL error: " << err << endl;
+		}
 		if(0) { //DEBUG
 			vcg::Point3f c = sphere.Center();
 			float r = node.tight_radius; //sphere.Radius(); //DEBUG
@@ -275,7 +281,10 @@ void Renderer::renderSelected(Nexus *nexus) {
 			glEnd();
 		}
 
-		assert(!glGetError());
+
+		while ((err = glGetError()) != GL_NO_ERROR) {
+			cerr << "OpenGL error: " << err << endl;
+		}
 		NodeData &data = nexus->nodedata[i];
 		assert(data.memory);
 
@@ -341,7 +350,10 @@ void Renderer::renderSelected(Nexus *nexus) {
 			glVertexAttrib4f(ATTRIB_COLOR, color[0]/255.0f, color[1]/255.0f, color[2]/255.0f, 1.0f);
 #endif
 		}
-		assert(!glGetError());
+
+		while ((err = glGetError()) != GL_NO_ERROR) {
+			cerr << "OpenGL error: " << err << endl;
+		}
 		if(!draw_triangles) {
 			static float error = 0;
 			//NexusController::instance().splat_renderer.Render(nvert, 6);
@@ -417,7 +429,10 @@ void Renderer::renderSelected(Nexus *nexus) {
 			}
 			offset = patch.triangle_offset;
 		}
-		assert(!glGetError());
+
+		while ((err = glGetError()) != GL_NO_ERROR) {
+			cerr << "OpenGL error: " << err << endl;
+		}
 	}
 //	cout << "GPU loaded: " << GPU_loaded <<  endl;
 }
