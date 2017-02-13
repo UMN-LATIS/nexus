@@ -314,7 +314,7 @@ void TMesh::splitSeams(nx::Signature &sig) {
         assert(visited[i] == true);
     }
     vert = new_vert;
-	//cout << "Replicated vertices: " << vert.size() - vn << " or " << 100*(vert.size() - vn)/vn << "%" << endl;
+    //cout << "Replicated vertices: " << vert.size() - vn << " or " << 100*(vert.size() - vn)/vn << "%" << endl;
     vn = vert.size();
     for(int i = 0; i < new_face.size(); i+= 3) {
         TFace &f = face[i/3];
@@ -394,7 +394,7 @@ void TMesh::serialize(uchar *buffer, nx::Signature &sig, std::vector<nx::Patch> 
     if(sig.vertex.hasTextures()) {
         vcg::Point2f *tstart = (vcg::Point2f *)buffer;
         for(uint i = 0; i < vn; i++) {
-			//assert(vert[i].T().P()[0] >= 0.0 && vert[i].T().P()[0] <= 1.0);
+            //assert(vert[i].T().P()[0] >= 0.0 && vert[i].T().P()[0] <= 1.0);
             tstart[i] = vert[i].T().P();
         }
         buffer += vert.size() * sizeof(vcg::Point2f);
@@ -493,6 +493,11 @@ float TMesh::randomSimplify(quint16 /*target_faces*/) {
 
 float TMesh::quadricSimplify(quint32 target) {
     vcg::tri::UpdateNormal<TMesh>::PerFaceNormalized(*this);
+    //degenerate norms will create problems in quadri simplification it seems.
+    for(auto &f: face) {
+        if(f.N().Norm() < 0.01)
+            f.N() = vcg::Point3f(1, 0, 0);
+    }
     vcg::tri::UpdateTopology<TMesh>::VertexFace(*this);
 
 
