@@ -97,13 +97,14 @@ void MeshEncoder::quantizeTexCoords() {
 		Point2f &p = texcoords[i];
 		Point2i &q = qtexcoords[i];
 		for(int k = 0; k < 2; k++) {
+			//obviously wrong textures moved to 0,0.
 			q[k] = (int)floor(p[k]/side + 0.5f);
-			if(k == 1)
-				q[k] *= 1.0;
+//			if(q[0] < 0)
+
 			if(i == 0) {
 				tmin[k] = q[k];
-				tmax[k] = q[k]; }
-			else {
+				tmax[k] = q[k];
+			} else {
 				if(tmin[k] > q[k]) tmin[k] = q[k];
 				if(tmax[k] < q[k]) tmax[k] = q[k];
 			}
@@ -754,12 +755,12 @@ void MeshEncoder::encodeFaces(int start, int end) {
 		int sbits = 8*tunstall2.compress(stream, &*tdiffs.begin(), tdiffs.size());
 
 
-		cout << "diff stream: " << sbits/(float)tdiffs.size() << endl;
+/*		cout << "diff stream: " << sbits/(float)tdiffs.size() << endl;
 		cout << " tdiffs: " << tdiffs.size()/(float)faces.size() << endl;
 		cout << "stream bits: " << bits/(float)faces.size() << endl;
 				bits += sbits;
 		cout << "Bit per face: " << bits/(float)faces.size() << endl;
-		cout << endl;
+		cout << endl; */
 	}
 
 	bitstream.flush();
@@ -832,6 +833,14 @@ void MeshEncoder::encodeVertex(int target, const Point3i &predicted, const Point
 			int n = needed(dt[k]);
 			if(n > tdiff)
 				tdiff = n;
+			if(tdiff >= 22) {
+				cerr << "Target: " << target << " size: " << qtexcoords.size() << endl;
+				cerr << "Texture precision required cannot be bigger than 2^-21. \n"
+					<< "tex: " << qtexcoords[target][0] << " " << qtexcoords[target][1] << "\n"
+					<< "predicted: " << texpredicted[0] << " " << texpredicted[1] << "\n"
+					<< "dt: " << dt[0] << " " << dt[1] << endl;
+				cerr << "Tex q: " << tex_q << " tex bits " << tex_bits << endl;
+			}
 		}
 
 		assert(tdiff > 0);

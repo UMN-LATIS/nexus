@@ -156,7 +156,7 @@ uint64_t NexusData::loadRam(uint32_t n) {
 				node.nface * header.signature.face.size();
 		d.memory = new char[size];
 		//memort data is
-		for(int i = 0; i < 1	; i++) {
+		for(int i = 0; i < 1; i++) {
 			MeshDecoder coder(node, d, patches, header.signature);
 			coder.decode(compressed_size, (unsigned char *)buffer);
 
@@ -191,7 +191,7 @@ uint64_t NexusData::loadRam(uint32_t n) {
 			}
 		}
 		double elapsed = time.elapsed();
-		cout << "Z Elapsed: " << elapsed << " M/s " << 1000*(node.nface/elapsed)/(1<<20) << endl;
+		//cout << "Z Elapsed: " << elapsed << " M/s " << 1000*(node.nface/elapsed)/(1<<20) << " Faces: " << node.nface << endl;
 
 
 	} else if(header.signature.flags & Signature::CTM1 || header.signature.flags & Signature::CTM2) {
@@ -272,6 +272,7 @@ uint64_t NexusData::loadRam(uint32_t n) {
 			texturedata[t].memory = (char *)file.map(texture.getBeginOffset(), texture.getSize());
 			//assert(texture.getSize());
 			//assert(texturedata[t].memory);
+			//size += texture.getSize();
 		}
 	}
 	return size;
@@ -293,10 +294,15 @@ uint64_t NexusData::dropRam(uint32_t n, bool write) {
 
 	data.memory = NULL;
 
-	uint32_t size = node.getSize();
-	if(header.n_textures) {
+	//report RAM size for compressed meshes.
+	uint32_t size = 0;
+	if(header.signature.flags & Signature::MECO)
+		size = node.nvert * header.signature.vertex.size() +
+				node.nface * header.signature.face.size();
+	else
+		size = node.getSize();
 
-		//be sure to load images
+	if(header.n_textures) {
 		for(uint32_t p = node.first_patch; p < node.last_patch(); p++) {
 			Patch &patch = patches[p];
 			uint32_t t = patch.texture;
@@ -307,7 +313,7 @@ uint64_t NexusData::dropRam(uint32_t n, bool write) {
 			file.unmap((uchar *)tdata.memory);
 			tdata.memory = NULL;
 			//Texture &texture = textures[t];
-			//size += texture.getSize(); //careful with cache... might create problems to return different sizes in get drop and size
+			//size += tdata.getSize(); //careful with cache... might create problems to return different sizes in get drop and size
 		}
 	}
 	return size;

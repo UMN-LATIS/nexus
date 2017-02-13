@@ -18,13 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- * Constructs a TurntableCylTrackball object.
- * @class Interactor which implements a Turntable controller + cylindrical pan with bounds.
+ * Constructs a FountainTrackball object.
  */
-function TurntablePanTrackball() {
+function FountainTrackball() {
 }
 
-TurntablePanTrackball.prototype = {
+FountainTrackball.prototype = {
 
 	setup : function (options) {
 		options = options || {};
@@ -102,10 +101,11 @@ TurntablePanTrackball.prototype = {
       var m = SglMat4.identity();
 
 	  // centering
-	  m = SglMat4.mul(m, SglMat4.translation([-this._center[0], -this._center[1], -this._center[2]]));
+	  //m = SglMat4.mul(m, SglMat4.translation([-this._center[0], -this._center[1], -this._center[2]]));
 
 	  // zoom
-	  m = SglMat4.mul(m, SglMat4.translation([0.0, 0.0, -this._distance]));
+	  var normalizedDistance = this._distance * presenter.sceneRadiusInv;
+	  m = SglMat4.mul(m, SglMat4.translation([0.0, 0.0, -normalizedDistance]));
 
   	  // rotation
       m = SglMat4.mul(m, SglMat4.rotationAngleAxis(this._theta, [1.0, 0.0, 0.0]));
@@ -114,9 +114,12 @@ TurntablePanTrackball.prototype = {
       m = SglMat4.mul(m, SglMat4.rotationAngleAxis(this._phi, [0.0, -1.0, 0.0]));
 
 	  // panning
-	  m = SglMat4.mul(m, SglMat4.translation([-this._panX, -this._panY, -this._panZ]));
+	  m = SglMat4.mul(m, SglMat4.translation([-this._panX* presenter.sceneRadiusInv, -this._panY* presenter.sceneRadiusInv, -this._panZ* presenter.sceneRadiusInv]));
 
       this._matrix = m;
+	  
+	  if(typeof updateCompass != 'undefined')
+		updateCompass(this._phi, this._theta);	  
     },
 
 	getState : function () {
@@ -170,10 +173,10 @@ TurntablePanTrackball.prototype = {
 		// setting base velocities 
 		this._speedPhi = Math.PI;
 		this._speedTheta = Math.PI;
-		this._speedPanX = 1.0;
-		this._speedPanY = 1.0;
-		this._speedPanZ = 1.0;
-		this._speedDistance = 2.0;
+		this._speedPanX = 5.0 * presenter.sceneRadiusInv;
+		this._speedPanY = 5.0 * presenter.sceneRadiusInv;
+		this._speedPanZ = 5.0 * presenter.sceneRadiusInv;
+		this._speedDistance = 5.0 * presenter.sceneRadiusInv;
 
 		//if phi unconstrained rotation, it is necessary to find a good rotation direction
 		if(!this._limitPhi){ 
@@ -216,7 +219,7 @@ TurntablePanTrackball.prototype = {
 
 		var maxtime = Math.max( timePhi, Math.max( timeTheta, Math.max( timeDistance, Math.max( timePanX, Math.max( timePanY, timePanZ )))));
 
-		maxtime = this.clamp(maxtime, 0.5, 2.0);
+		maxtime = this.clamp(maxtime, 0.5, 1.0);
 
 		this._speedPhi      *= timePhi / maxtime;
 		this._speedTheta    *= timeTheta / maxtime;
@@ -233,11 +236,11 @@ TurntablePanTrackball.prototype = {
 		// stop animation
 		this._isAnimating = false;
 		
-		var newpanX = (newpoint[0]-presenter.sceneCenter[0]) * presenter.sceneRadiusInv;
-		var newpanY = (newpoint[1]-presenter.sceneCenter[1]) * presenter.sceneRadiusInv;
-		var newpanZ = (newpoint[2]-presenter.sceneCenter[2]) * presenter.sceneRadiusInv;
+		var newpanX = (newpoint[0]-presenter.sceneCenter[0]) ;
+		var newpanY = (newpoint[1]-presenter.sceneCenter[1]) ;
+		var newpanZ = (newpoint[2]-presenter.sceneCenter[2]) ;
 		
-		this.animateToState([sglRadToDeg(this._phi), sglRadToDeg(this._theta), newpanX, newpanY, newpanZ, (this._distance * 0.8)]);
+		this.animateToState([sglRadToDeg(this._phi), sglRadToDeg(this._theta), newpanX, newpanY, newpanZ, (this._distance * 0.65)]);
 	},	
 	
 	tick : function (dt) {
@@ -315,7 +318,7 @@ TurntablePanTrackball.prototype = {
 
 	set action(a) { if(this._action != a) this._new_action = true; this._action = a; },
 
-	get matrix() { return this._matrix; },
+	get matrix() { this._computeMatrix(); return this._matrix; },
 
 	reset : function () {
 		this._matrix = SglMat4.identity();
@@ -366,7 +369,6 @@ TurntablePanTrackball.prototype = {
 	},
 
 	pan: function(m, dx, dy) {
-
 		//determining current X, Y and Z axis
 		var Xvec = [1.0, 0.0, 0.0, 1.0];
 		var Yvec = [0.0, 1.0, 0.0, 1.0];
@@ -378,9 +380,12 @@ TurntablePanTrackball.prototype = {
 		Yvec = SglMat4.mul4(SglMat4.rotationAngleAxis(this._theta, [1.0, 0.0, 0.0]), Yvec);
 		Zvec = SglMat4.mul4(SglMat4.rotationAngleAxis(this._theta, [1.0, 0.0, 0.0]), Zvec);
 
-		this._panX += (dx * Xvec[0]) + (dy * Xvec[1]);
-		this._panY += (dx * Yvec[0]) + (dy * Yvec[1]);
-		this._panZ += (dx * Zvec[0]) + (dy * Zvec[1]);
+		var zoomCorrection = 0.1 + (this._distance - this._minMaxDist[0]) / (this._minMaxDist[1] - this._minMaxDist[0]);
+		var speed = 5.0 * zoomCorrection;
+		
+		this._panX += (speed * dx * Xvec[0]) + (speed * dy * Xvec[1]);
+		this._panY += (speed * dx * Yvec[0]) + (speed * dy * Yvec[1]);
+		this._panZ += (speed * dx * Zvec[0]) + (speed * dy * Zvec[1]);
 
 		//clamping
 		this._panX = this.clamp(this._panX, this._minMaxPanX[0], this._minMaxPanX[1]);

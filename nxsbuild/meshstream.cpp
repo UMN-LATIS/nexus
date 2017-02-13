@@ -49,7 +49,7 @@ void Stream::load(QStringList paths) {
 			loader = new StlLoader(file, vertex_quantization, max_memory); */
 
 		else
-			throw QString("Only supported input formats are .ply, .off, .stl and obj  at the moment\n");
+			throw QString("Only supported input formats are .ply, .stl and obj  at the moment\n");
 
 		loader->setVertexQuantization(vertex_quantization);
 		loadMesh(loader);
@@ -60,7 +60,8 @@ void Stream::load(QStringList paths) {
 		if(has_textures) {
 			QFileInfo file(paths[0]);
 			QString path = file.path();
-			textures.push_back(path + "/" + loader->texture_filename);
+			for(auto &tex: loader->texture_filenames)
+				textures.push_back(path + "/" + tex);
 		}
 
 		//box.Add(loader->box); //this lineB AFTER the mesh is streamed
@@ -110,6 +111,7 @@ StreamSoup::StreamSoup(QString prefix):
 
 void StreamSoup::loadMesh(MeshLoader *loader) {
 	loader->setMaxMemory(maxMemory());
+	loader->texOffset = textures.size();
 	//get 128Mb of data
 	quint32 length = (1<<20); //times 52 bytes.
 	Triangle *triangles = new Triangle[length];

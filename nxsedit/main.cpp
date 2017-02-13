@@ -180,19 +180,15 @@ int main(int argc, char *argv[]) {
 					int level = 0;
 					int node = 0;
 					uint32_t sink = nexus.header.n_nodes -1;
-					while(1) {
-						Node &n = nexus.nodes[node];
+					coord_step = error_q*nexus.nodes[0].error/2;
+					for(int i = 0; i < sink; i++){
+						Node &n = nexus.nodes[i];
 						Patch &patch = nexus.patches[n.first_patch];
-						coord_step = error_q*n.error/2; //we are looking at level1 error, need level0 estimate.
-
-						if(patch.node == sink)
-							break;
-						node = patch.node;
-						level++;
-					}
-					if(level < 1) {
-						cerr << "Singlelevel nexus: can't use quantization_factor (Q) option\n";
-						return -1;
+						if(patch.node != sink)
+							continue;
+						double e = error_q*n.error/2;
+						if(e < coord_step)
+							coord_step = e; //we are looking at level1 error, need level0 estimate.
 					}
 					extractor.error_factor = error_q;
 				}
@@ -204,8 +200,8 @@ int main(int argc, char *argv[]) {
 				extractor.color_bits[1] = chroma_bits;
 				extractor.color_bits[2] = chroma_bits;
 				extractor.color_bits[3] = alpha_bits;
-				extractor.tex_q = (int)log2(tex_step * pow(2, -12));
-				cout << "texq: " << extractor.tex_q << endl;
+				extractor.tex_step = tex_step; //was (int)log2(tex_step * pow(2, -12));, moved to per node value
+				cout << "tex step: " << extractor.tex_step << endl;
 			}
 
 			cout << "saving with flags: " << signature.flags << endl;

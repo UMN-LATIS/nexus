@@ -241,7 +241,7 @@ void Renderer::renderSelected(Nexus *nexus) {
 		}
 	}
 */
-
+	int GPU_loaded = 0;
 	uint32_t last_texture = 0xffffffff;
 	for(uint32_t i = 0; i <= last_node; i++) {
 		if(!selected[i]) continue;
@@ -279,8 +279,10 @@ void Renderer::renderSelected(Nexus *nexus) {
 		NodeData &data = nexus->nodedata[i];
 		assert(data.memory);
 
-		if(!data.vbo)
+		if(!data.vbo) {
+			GPU_loaded++;
 			nexus->loadGpu(i);
+		}
 
 		assert(data.vbo);
 
@@ -417,6 +419,7 @@ void Renderer::renderSelected(Nexus *nexus) {
 		}
 		assert(!glGetError());
 	}
+//	cout << "GPU loaded: " << GPU_loaded <<  endl;
 }
 
 Traversal::Action Renderer::expand(HeapNode h) {

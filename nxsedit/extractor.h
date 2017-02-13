@@ -12,7 +12,7 @@ public:
     double error_factor; //unused error for internal vertices
     int color_bits[4];
     int norm_bits;
-	int tex_q;
+	float tex_step; //in pixel units
 
     Extractor(nx::NexusData *nexus);
 

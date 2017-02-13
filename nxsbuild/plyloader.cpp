@@ -13,6 +13,7 @@ struct PlyFace {
     quint32 f[3];
 #ifdef TEXTURE
     float t[6];
+	quint32 texNumber;
 #endif
     unsigned char n;
 };
@@ -30,7 +31,7 @@ PropDescriptor plyprop1[13]= {
     {"vertex", "nz",    T_FLOAT, T_FLOAT, offsetof(Splat, n[2]),0,0,0,0,0,0},
     {"vertex", "diffuse_red",   T_UCHAR, T_UCHAR, offsetof(Vertex,c[0]),0,0,0,0,0,0},
     {"vertex", "diffuse_green", T_UCHAR, T_UCHAR, offsetof(Vertex,c[1]),0,0,0,0,0,0},
-    {"vertex", "diffuse_blue" , T_UCHAR, T_UCHAR, offsetof(Vertex,c[2]),0,0,0,0,0,0}
+	{"vertex", "diffuse_blue" , T_UCHAR, T_UCHAR, offsetof(Vertex,c[2]),0,0,0,0,0,0},
 };
 
 PropDescriptor plyprop2[1]=	{
@@ -57,6 +58,10 @@ PropDescriptor plyprop3_uint[1]=	{
 PropDescriptor plyprop4[1]=	{
     {"face", "texcoord",T_FLOAT,T_FLOAT,offsetof(PlyFace,t[0]),
      1,0,T_UCHAR,T_UCHAR, offsetof(PlyFace,n) ,0}
+};
+
+PropDescriptor plyprop5[1]=	{
+	{"face", "texnumber",T_INT,T_INT,offsetof(PlyFace, texNumber), 0,0,0,0,0,0}
 };
 #endif
 
@@ -92,8 +97,7 @@ PlyLoader::PlyLoader(QString filename):
 
             char buf2[255];
             ply::interpret_texture_name( bufclean.c_str(),filename.toLatin1().data(), buf2 );
-            //textures.push_back( std::string(buf2) );
-            texture_filename = buf2;
+			texture_filenames.push_back(buf2);
         }
     }
 }
@@ -154,7 +158,11 @@ void PlyLoader::init() {
     pf.AddToRead(plyprop3_uint[0]);
     if(pf.AddToRead(plyprop4[0]) == vcg::ply::E_NOERROR) {
         has_textures = true;
-    }
+	}
+	if(pf.AddToRead(plyprop5[0]) == vcg::ply::E_NOERROR) {
+		//do nothing.
+	}
+
 
     pf.SetCurElement(vertices_element);
 }
@@ -193,6 +201,7 @@ quint32 PlyLoader::getTriangles(quint32 size, Triangle *buffer) {
     quint32 count = 0;
 
     PlyFace face;
+	face.texNumber = 0;
     for(quint32 i = 0; i < size && current_triangle < n_triangles; i++) {
 
         pf.Read((void *) &face);
@@ -206,6 +215,7 @@ quint32 PlyLoader::getTriangles(quint32 size, Triangle *buffer) {
             current.vertices[k] = vertex;
         }
         current.node = 0;
+		current.tex = face.texNumber + texOffset;
 
         current_triangle++;
 

@@ -169,7 +169,6 @@ protected:
             if(unload() || load()) {
                 new_data.testAndSetOrdered(0, 1);  //if not changed, set as changed
                 input->check_queue.open();        //we signal ourselves to check again
-                cout << "loaded or unloaded\n";
             }
             input->check_queue.leave();
         }

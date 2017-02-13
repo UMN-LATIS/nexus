@@ -95,10 +95,12 @@ public:
     std::vector<nx::Texture> textures;
     std::vector<QString> images;
 
-    QTemporaryFile tmp; //used during construction
+	quint64 input_pixels, output_pixels;
+	QTemporaryFile nodeTex; //texure images for each node stored here.
     quint64 max_memory;
 
     float scaling;
+	bool useNodeTex; //use node textures
 
 
 

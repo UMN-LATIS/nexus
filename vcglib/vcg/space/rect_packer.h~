@@ -240,7 +240,7 @@ static  bool PackOccupancyMulti(const std::vector<Box2x > & rectVec,  /// the se
     return true;
   }
 
-//private:
+private:
 
 
 class ComparisonFunctor

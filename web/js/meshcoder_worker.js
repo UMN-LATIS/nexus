@@ -1,6 +1,6 @@
 /*
 3DHOP - 3D Heritage Online Presenter
-Copyright (c) 2014, Marco Callieri - Visual Computing Lab, ISTI - CNR
+Copyright (c) 2014-16, Federico Ponchio - Visual Computing Lab, ISTI - CNR
 All rights reserved.    
 
 This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,9 @@ onmessage = function(job) {
 	var patches = job.data.patches;
 //	var now =new Date().getTime();
 
-	var size = node.buffer.byteLength;
+	var size;
+	if(!node.buffer) return;
+	else size = node.buffer.byteLength;
 	var buffer;
 	for(var i =0 ; i < 1; i++) {
 		var coder = new MeshCoder(signature, node, patches);
@@ -724,7 +726,7 @@ decodeConnectivity: function(length, start) {
 
 	var current_face = 0;          //keep track of connected component start
 	//t.vertex_count = 0;
-	var front = new Uint32Array(this.node.nface*12);
+	var front = new Uint32Array(this.node.nface*18);
 	var front_count = 0; //count each integer so it's front_back*5
 	function addFront(_v0, _v1, _v2, _prev, _next) {
 		front[front_count++] = _v0;

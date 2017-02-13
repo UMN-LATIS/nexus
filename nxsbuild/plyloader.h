@@ -14,7 +14,7 @@ public:
     ~PlyLoader();
 
     void setMaxMemory(quint64 max_memory);
-    quint32 getTriangles(quint32 size, Triangle *buffer);
+	quint32 getTriangles(quint32 size, Triangle *buffer);
     quint32 getVertices(quint32 size, Splat *vertex);
 
     quint32 nVertices() { return n_vertices; }

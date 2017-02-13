@@ -19,7 +19,9 @@ public:
     virtual bool hasColors() { return has_colors; } //call this
     virtual bool hasNormals() { return has_normals; } //call this
     virtual bool hasTextures() { return has_textures; }
-    QString texture_filename;
+	std::vector<QString> texture_filenames;
+	int texOffset; //when returning triangles add texOffset to refer to the correct texture in stream.
+
 protected:
     bool has_colors;
     bool has_normals;

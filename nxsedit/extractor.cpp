@@ -233,7 +233,11 @@ void Extractor::compress(QFile &file, nx::Signature &signature, nx::Node &node, 
 		coder.norm_q = norm_bits;
 		for(int k = 0; k < 4; k++)
 			coder.color_q[k] = color_bits[k];
-		coder.tex_q = tex_q;
+		//HER if signaure has texture was set to (int)log2(tex_step * pow(2, -12)); //here set to -14
+		//here we shold set to -log2(max_side/tex_step) where max_side width or height of the associated texture.
+		//unfortunately we have no really fast to provide this info.....
+		//so assume
+		coder.tex_q = -(int)log2(512/tex_step);
 
 		coder.encode();
 		file.write((char *)&*coder.stream.buffer, coder.stream.size());

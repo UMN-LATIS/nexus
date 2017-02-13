@@ -22,7 +22,6 @@ void TMesh::loadPly(const QString& filename) {
 
 
 void TMesh::load(Soup &soup) {
-
     vcg::tri::Allocator<TMesh>::AddVertices(*this, soup.size() * 3);
     vcg::tri::Allocator<TMesh>::AddFaces(*this, soup.size());
 
@@ -42,6 +41,7 @@ void TMesh::load(Soup &soup) {
             assert(!isnan(in.t[1]));
         }
         f.node = triangle.node;
+		f.tex = triangle.tex;
     }
 
     //UNIFICATION PROCESS
@@ -113,6 +113,7 @@ void TMesh::save(Soup &soup, quint32 node) {
             vertex.c[3] = v.C()[3];
         }
         triangle.node = node;
+		triangle.tex = t.tex;
         soup.push_back(triangle);
     }
 }
@@ -138,6 +139,7 @@ void TMesh::getTriangles(Triangle *triangles, quint32 node) {
             vertex.t[1] = t.WT(k).V();
         }
         triangle.node = node;
+		triangle.tex = t.tex;
     }
 }
 
@@ -265,6 +267,7 @@ nx::Node TMesh::getNode()
     node.cone = normalsCone();
     return node;
 }
+//we have textures stored on wedge texture coordinates, we split vertices where wedges coords are different.
 void TMesh::splitSeams(nx::Signature &sig) {
 
     if(sig.vertex.hasNormals() && sig.face.hasIndex())
@@ -273,7 +276,7 @@ void TMesh::splitSeams(nx::Signature &sig) {
     std::vector<bool> visited(vert.size(), false);
     std:vector<int> next(vert.size(), -1);
     std::vector<TVertex> new_vert(vert.size());
-    std::vector<int> new_face;
+	std::vector<int> new_face;
     for(auto &f: face) {
         for(int k = 0; k < 3; k++) {
             int index = f.V(k) - &*vert.begin();
@@ -314,7 +317,6 @@ void TMesh::splitSeams(nx::Signature &sig) {
         assert(visited[i] == true);
     }
     vert = new_vert;
-    //cout << "Replicated vertices: " << vert.size() - vn << " or " << 100*(vert.size() - vn)/vn << "%" << endl;
     vn = vert.size();
     for(int i = 0; i < new_face.size(); i+= 3) {
         TFace &f = face[i/3];
@@ -394,7 +396,7 @@ void TMesh::serialize(uchar *buffer, nx::Signature &sig, std::vector<nx::Patch> 
     if(sig.vertex.hasTextures()) {
         vcg::Point2f *tstart = (vcg::Point2f *)buffer;
         for(uint i = 0; i < vn; i++) {
-            //assert(vert[i].T().P()[0] >= 0.0 && vert[i].T().P()[0] <= 1.0);
+			//assert(vert[i].T().P()[0] >= 0.0 && vert[i].T().P()[0] <= 1.0);
             tstart[i] = vert[i].T().P();
         }
         buffer += vert.size() * sizeof(vcg::Point2f);
@@ -493,11 +495,11 @@ float TMesh::randomSimplify(quint16 /*target_faces*/) {
 
 float TMesh::quadricSimplify(quint32 target) {
     vcg::tri::UpdateNormal<TMesh>::PerFaceNormalized(*this);
-    //degenerate norms will create problems in quadri simplification it seems.
-    for(auto &f: face) {
-        if(f.N().Norm() < 0.01)
-            f.N() = vcg::Point3f(1, 0, 0);
-    }
+	//degenerate norms will create problems in quadri simplification it seems.
+	for(auto &f: face) {
+		if(f.N().Norm() < 0.01)
+			f.N() = vcg::Point3f(1, 0, 0);
+	}
     vcg::tri::UpdateTopology<TMesh>::VertexFace(*this);
 
 

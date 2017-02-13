@@ -81,9 +81,10 @@ class TFace: public vcg::Face<
         vcg::face::VertexRef,
         vcg::face::Normal3f,
         vcg::face::WedgeTexCoord2f,
-        vcg::face::BitFlags > {
+		vcg::face::BitFlags> {
 public:
     quint32 node;
+	quint32 tex; //texture number where the wedge tex coords refer to.
     bool operator<(const TFace &t) const {
         return node < t.node;
     }
