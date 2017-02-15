@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
 
 	// we create a QCoreApplication just so that QT loads image IO plugins (for jpg and tiff loading)
 	QCoreApplication myUselessApp(argc, argv);
+	setlocale(LC_ALL, "C");
+	QLocale::setDefault(QLocale::C);		      QLocale::setDefault(QLocale::C);
 
     QVariant node_size(1<<15),
              top_node_size(4096),
@@ -34,6 +36,7 @@ int main(int argc, char *argv[]) {
     bool no_colors = false;
 	bool no_texcoords = false;
     bool compress = false;
+	bool useOrigTex = false;
 
     //BTREE options
     QVariant adaptive(0.333f);
@@ -47,6 +50,7 @@ int main(int argc, char *argv[]) {
     opt.addOption('t', "top_node_faces", "number of triangles in the top node, default 4096", &top_node_size);
     opt.addOption('d', "decimation", "decimation method: quadric, edgelen. Default: quadric", &decimation);
     opt.addOption('s', "scaling", "scaling between level, default 0.5", &decimation);
+	opt.addSwitch('O', "orig_textures", "Use original textures, no repacking", &useOrigTex);
 
     //btree options
     opt.addOption('a', "adaptive", "split notes adaptively [0...1] default 0.333", &adaptive);
@@ -132,6 +136,7 @@ int main(int argc, char *argv[]) {
         NexusBuilder builder(components);
         builder.setMaxMemory(max_memory);
         builder.setScaling(scaling.toFloat());
+		builder.useNodeTex = !useOrigTex;
 
 
         KDTree *tree = 0;

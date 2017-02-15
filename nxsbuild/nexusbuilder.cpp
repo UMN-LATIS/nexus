@@ -90,8 +90,13 @@ void NexusBuilder::create(KDTree *tree, Stream *stream, uint top_node_size) {
 
 		createLevel(tree, stream, level);
 		level++;
+		if(last_top_level_size != 0 && stream->size()/(float)last_top_level_size > 0.7f) {
+			cout << "Stream: " << stream->size() << " Last top level size: " << last_top_level_size << endl;
+			cout << "Quitting prematurely!\n";
+			break;
+		}
 		if(tree->nLeaves() == 1) {
-			if(last_top_level_size != 0 && stream->size()/(float)last_top_level_size > 0.7f)
+			if(last_top_level_size != 0)
 				break;
 			last_top_level_size = stream->size();
 		}
@@ -227,7 +232,9 @@ QImage extractNodeTex(TMesh &mesh, std::vector<QImage> &textures, float &error) 
 		int v[3];
 		for(int i = 0; i < 3; i++) {
 			v[i] = face.V(i) - &*mesh.vert.begin();
-			vertex_to_tex[v[i]] = face.tex;
+			int &t = vertex_to_tex[v[i]];
+//			if(t != -1 && t != face.tex) qDebug() << "Missing vertex replication across seams\n";
+			t = face.tex;
 			//assert(face.tex < textures.size()); //no.
 		}
 		components.link(v[0], v[1]);
@@ -239,30 +246,30 @@ QImage extractNodeTex(TMesh &mesh, std::vector<QImage> &textures, float &error) 
 	for(auto &face: mesh.face) {
 		int v[3];
 		for(int i = 0; i < 3; i++) {
-			v[i] = face.V(i) - &*mesh.vert.begin();
-			vertex_to_tex[v[i]] = face.tex;
+			int v = face.V(i) - &*mesh.vert.begin();
+			vertex_to_tex[v] = face.tex;
 		}
-		assert(vertex_to_box[v[0]] == vertex_to_box[v[1]]);
+/*		assert(vertex_to_box[v[0]] == vertex_to_box[v[1]]);
 		assert(vertex_to_box[v[0]] == vertex_to_box[v[2]]);
 		assert(components.root(v[0]) == components.root(v[2]));
-		assert(components.root(v[0]) == components.root(v[1]));
+		assert(components.root(v[0]) == components.root(v[1])); */
 	}
 	//assign all boxes to a tex (and remove boxes where the tex is -1
 
 	//compute boxes
 	boxes.resize(n_boxes);
-	box_texture.resize(boxes.size(), -1);
+	box_texture.resize(n_boxes, -1);
 	for(int i = 0; i < mesh.vert.size(); i++) {
 		int b = vertex_to_box[i];
 		int tex = vertex_to_tex[i];
 		if(tex < 0) continue; //vertex not assigned.
 
 		vcg::Box2f &box = boxes[b];
-		assert(box_texture[b] == -1 || box_texture[b] == tex);
+//		assert(box_texture[b] == -1 || box_texture[b] == tex);
 		box_texture[b] = tex;
 		auto t = mesh.vert[i].T().P();
-		if(isnan(t[0]) || isnan(t[1]) || t[0] < 0 || t[1] < 0 || t[0] > 1 || t[1] > 1)
-			cout << "T: " << t[0] << " " << t[1] << endl;
+//		if(isnan(t[0]) || isnan(t[1]) || t[0] < 0 || t[1] < 0 || t[0] > 1 || t[1] > 1)
+//			cout << "T: " << t[0] << " " << t[1] << endl;
 		if(t[0] != 0.0f || t[1] != 0.0f)
 			box.Add(t);
 	}
@@ -316,11 +323,15 @@ QImage extractNodeTex(TMesh &mesh, std::vector<QImage> &textures, float &error) 
 
 	//pack boxes;
 	std::vector<vcg::Point2i> mapping;
-	vcg::Point2i maxSize(5024, 5024);
+	vcg::Point2i maxSize(8024, 8024);
 	vcg::Point2i finalSize;
-	vcg::RectPacker<float>::PackInt(sizes, maxSize, mapping, finalSize);
+	bool success = vcg::RectPacker<float>::PackInt(sizes, maxSize, mapping, finalSize);
+	if(!success) {
+		cerr << "Failed packing!\n";
+		exit(0);
+	}
 
-	std::cout << "Boxes: " << boxes.size() << " Final size: " << finalSize[0] << " " << finalSize[1] << std::endl;
+//	std::cout << "Boxes: " << boxes.size() << " Final size: " << finalSize[0] << " " << finalSize[1] << std::endl;
 	QImage image(finalSize[0], finalSize[1], QImage::Format_RGB32);
 	image.fill(QColor(127, 127, 127));
 	//copy boxes using mapping
@@ -330,9 +341,10 @@ QImage extractNodeTex(TMesh &mesh, std::vector<QImage> &textures, float &error) 
 
 	for(int i = 0; i < mesh.vert.size(); i++) {
 		auto &p = mesh.vert[i];
+		auto &uv = p.T().P();
 		int b = vertex_to_box[i];
 		if(b == -1) {
-			p.T().P() = vcg::Point2f(0.0f, 0.0f);
+			uv = vcg::Point2f(0.0f, 0.0f);
 			continue;
 		}
 		vcg::Point2i &o = origins[b];
@@ -343,19 +355,21 @@ QImage extractNodeTex(TMesh &mesh, std::vector<QImage> &textures, float &error) 
 		float px = 1/(float)img.width();
 		float py = 1/(float)img.height();
 
-		assert(p.T().P()[0] >= 0.0f);
-		assert(p.T().P()[1] >= 0.0f);
+		if(uv[0] < 0.0f)
+			uv[0] = 0.0f;
+		if(uv[1] < 0.0f)
+			uv[1] = 0.0f;
 
-		float dx = p.T().P()[0]/px - o[0];
-		float dy = p.T().P()[1]/py - o[1];
+		float dx = uv[0]/px - o[0];
+		float dy = uv[1]/py - o[1];
 		if(dx < 0.0f) dx = 0.0f;
 		if(dy < 0.0f) dy = 0.0f;
 
-		p.T().P()[0] = (m[0] + dx)*pdx; //how many pixels from the origin
-		p.T().P()[1] = (m[1] + dy)*pdy; //how many pixels from the origin
+		uv[0] = (m[0] + dx)*pdx; //how many pixels from the origin
+		uv[1] = (m[1] + dy)*pdy; //how many pixels from the origin
 
-		assert(!isnan(p.T().P()[0]));
-		assert(!isnan(p.T().P()[1]));
+		assert(!isnan(uv[0]));
+		assert(!isnan(uv[1]));
 	}
 	//compute error:
 	float pdx2 = pdx*pdx;
@@ -513,8 +527,10 @@ void NexusBuilder::createLevel(KDTree *in, Stream *out, int level) {
 						textures.push_back(t);
 					}
 					//create 1.4 size texture and store it.
+					int w = std::max(1, (int)(img.width()/M_SQRT2));
+					int h = std::max(1, (int)(img.height()/M_SQRT2));
 
-					img = img.scaled(img.width()/M_SQRT2, img.height()/M_SQRT2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+					img = img.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
 					QString texture_filename = QString("nexus_tmp_tex%1.png").arg(images.size());
 

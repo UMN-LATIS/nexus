@@ -20,7 +20,7 @@ public:
     quint32 nVertices() { return n_vertices; }
     quint32 nTriangles() { return n_triangles; }
 private:
-    vcg::ply::PlyFile pf;
+	vcg::ply::PlyFile pf;
     qint64 vertices_element;
     qint64 faces_element;
 

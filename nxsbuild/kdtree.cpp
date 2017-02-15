@@ -13,6 +13,21 @@ KDTree::KDTree(float adapt): adaptive(adapt) {
     axes[2] = vcg::Point3f(0.0f, 0.0f, 1.0f);
 }
 
+float boxFloatPrecision(const vcg::Box3f &box) {
+	vcg::Point3f dim = box.Dim();
+	vcg::Point3f center = box.Center();
+	vcg::Point3f px;
+	for(int i = 0; i < 3; i++)
+		px[i] = log2(fabs(dim[i])) - log2(fabs(center[i])) + 24; //2^ux is the unit at that scale.
+
+	float r = std::min(px[0], std::min(px[1], px[2]));
+	return r;
+
+/*	float ux = log2(fabs(center[0])) - 24; //2^ux is the unit at that scale.
+	float dx = log2(fabs(dim[0]));   //2^d is the size of the box
+	float px = dx - ux; */
+}
+
 void KDTree::load(Stream *stream) {
 
     textures = stream->textures;
@@ -21,6 +36,18 @@ void KDTree::load(Stream *stream) {
     node.block = 0;
     //the node.box is relative to the axes
     node.box = computeBox(stream->box);
+
+	float precision = boxFloatPrecision(node.box);
+	if(precision < 16) {
+		cout << "The bounding box is far from the origin respect to it's size,\n"
+				"the model could be quantized.\n"
+				"In that case use CloudCompare to move the model to the origin\n";
+		if(precision < 12) {
+			throw "Severe quantiziation, quitting";
+		}
+	}
+
+
 
     //Enlarge box to avoid numerical instabilities. (sigh!)
     float offset = node.box.Diag()/100;

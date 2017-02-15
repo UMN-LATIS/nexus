@@ -33,6 +33,11 @@ PropDescriptor plyprop1[13]= {
     {"vertex", "diffuse_green", T_UCHAR, T_UCHAR, offsetof(Vertex,c[1]),0,0,0,0,0,0},
 	{"vertex", "diffuse_blue" , T_UCHAR, T_UCHAR, offsetof(Vertex,c[2]),0,0,0,0,0,0},
 };
+PropDescriptor doublecoords[3] = {
+	{"vertex", "x",     T_DOUBLE, T_FLOAT, offsetof(Vertex,v[0]),0,0,0,0,0,0},
+	{"vertex", "y",     T_DOUBLE, T_FLOAT, offsetof(Vertex,v[1]),0,0,0,0,0,0},
+	{"vertex", "z",     T_DOUBLE, T_FLOAT, offsetof(Vertex,v[2]),0,0,0,0,0,0}
+};
 
 PropDescriptor plyprop2[1]=	{
     {"face", "vertex_indices",T_INT,T_UINT,offsetof(PlyFace,f[0]),
@@ -80,7 +85,7 @@ PlyLoader::PlyLoader(QString filename):
         int error = pf.GetError();
         throw QString("Could not open file '" + filename + "' error: %1").arg(error);
 
-    }
+	}
     init();
     for(int co = 0; co < int(pf.comments.size()); ++co) {
         std::string TFILE = "TextureFile";
@@ -100,6 +105,8 @@ PlyLoader::PlyLoader(QString filename):
 			texture_filenames.push_back(buf2);
         }
     }
+	if(has_textures && texture_filenames.size() == 0)
+		has_textures = false;
 }
 
 PlyLoader::~PlyLoader() {
@@ -117,13 +124,17 @@ void PlyLoader::init() {
             n_triangles = pf.ElemNumber(i);
             faces_element = i;
         }
-    }
-
+	}
     //testing for required vertex fields.
     if(pf.AddToRead(plyprop1[0])==-1 ||
             pf.AddToRead(plyprop1[1])==-1 ||
-            pf.AddToRead(plyprop1[2])==-1)
-        throw QString("Ply file has not xyz coords");
+			pf.AddToRead(plyprop1[2])==-1) {
+		if(pf.AddToRead(doublecoords[0])==-1 ||
+				pf.AddToRead(doublecoords[1])==-1 ||
+				pf.AddToRead(doublecoords[2])==-1) {
+			throw QString("Ply file has not xyz coords");
+		}
+	}
 
     //these calls will silently fail if no color is present
     int error = pf.AddToRead(plyprop1[3]);
@@ -174,7 +185,7 @@ void PlyLoader::cacheVertices() {
     //caching vertices on temporary file
     for(quint64 i = 0; i < n_vertices; i++) {
         Vertex &v = vertices[i];
-        pf.Read((void *)&v);
+		pf.Read((void *)&v);
         if(quantization) {
             quantize(v.v[0]);
             quantize(v.v[1]);
